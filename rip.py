@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 import time
 import os.path
 import xml.etree.ElementTree as ET
@@ -12,6 +13,7 @@ import sys
 # The chrome application path is pretty platform/install specific..
 CHROME_PATH = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 
+
 def mkfilename(s):
     fn = ""
     for x in s:
@@ -21,6 +23,7 @@ def mkfilename(s):
             fn += "_"
     return fn
 
+
 def fix_links(fn):
     modified = False
     doc = open(fn, 'r').read()
@@ -29,22 +32,23 @@ def fix_links(fn):
         href = link.get('href')
         if href is None:
             continue
-        
+
         if '?' in href:
             href = href.split('?')[0]
-        
+
         if not href.startswith('/t3Portal/document'):
             continue
-        
+
         new_path = os.path.basename(href)
         if href != new_path:
             link['href'] = new_path
             modified = True
-    
+
     if modified:
         print("Writing ", fn)
         with open(fn, 'w') as fh:
             fh.write(soup.prettify())
+
 
 def download_ewd(driver, ewd):
     SYSTEMS = ["system", "routing", "overall"]
@@ -95,10 +99,11 @@ def download_ewd(driver, ewd):
             shutil.move(dl_path, fn)
             print("Done ", name)
 
+
 def toc_parse_items(base, items):
     if len(items) == 0:
         return ""
-    
+
     wrap = "<ul>"
 
     for i in items:
@@ -123,6 +128,7 @@ def toc_parse_items(base, items):
     wrap += "</ul>"
     return wrap
 
+
 def build_toc_index(base):
     if not os.path.exists(base):
         return False
@@ -132,7 +138,7 @@ def build_toc_index(base):
         return False
 
     print("Building TOC index from ", toc_path, "...")
-    
+
     tree = ET.parse(toc_path)
     root = tree.getroot()
 
@@ -143,6 +149,7 @@ def build_toc_index(base):
         fh.write("<html><head><title>" + base + "</title></head><body>")
         fh.write(body)
         fh.write("</body></html>")
+
 
 def download_manual(driver, t, id):
     if not os.path.exists(os.path.join(id, "html")):
@@ -174,18 +181,18 @@ def download_manual(driver, t, id):
         href = i.attrib['href']
         url = "https://techinfo.toyota.com" + href
         n += 1
-        
+
         print("Downloading", href, " (", n, "/", c, ")...")
         # all are html files, load them all up one at a time and then save them
         f_parts = href.split('/')
-        f_p = os.path.join(id, "html", f_parts[len(f_parts)-1])
-        pdf_p = os.path.join(id, "pdf", f_parts[len(f_parts)-1][:-5] + ".pdf")
+        f_p = os.path.join(id, "html", f_parts[len(f_parts) - 1])
+        pdf_p = os.path.join(id, "pdf", f_parts[len(f_parts) - 1][:-5] + ".pdf")
 
-        #print("do we make a pdf?")
-        print(f_p+" "+pdf_p)
+        # print("do we make a pdf?")
+        print(f_p + " " + pdf_p)
         if os.path.exists(f_p) and not os.path.exists(pdf_p):
             # make the pdf
-            #print("we have a file but no pdf, let's go!")
+            # print("we have a file but no pdf, let's go!")
             make_pdf(f_p, pdf_p)
 
         if os.path.exists(f_p) or os.path.exists(pdf_p):
@@ -194,7 +201,7 @@ def download_manual(driver, t, id):
 
         if "location='/t3Portal" in driver.page_source:
             print("\tPDF redirect found!")
-            
+
             while True:
                 time.sleep(5.0)
                 incomplete = False
@@ -218,12 +225,12 @@ def download_manual(driver, t, id):
                 if f in driver.page_source:
                     dest_file = f
                     break
-            
+
             if dest_file is None:
                 print("\tCould not find matching download!")
                 input("wait")
                 continue
-            
+
             shutil.move(os.path.join("download", dest_file), pdf_p)
             print("\tDone")
         else:
@@ -235,7 +242,7 @@ def download_manual(driver, t, id):
 
             # remove the toyota footer
             src = None
-            try :
+            try:
                 src = driver.execute_script(open("injected.js", "r").read())
             except:
                 time.sleep(1)
@@ -247,18 +254,21 @@ def download_manual(driver, t, id):
             fix_links(f_p)
 
             print("\tDone")
-    
+
     build_toc_index(id)
+
 
 def make_pdf(src, dest):
     print("Creating PDF from", src, "to", dest)
-    subprocess.run([CHROME_PATH, "--print-to-pdf=" + os.path.abspath(dest), "--no-gpu", "--headless", "file://" + os.path.abspath(src)])
+    subprocess.run([CHROME_PATH, "--print-to-pdf=" + os.path.abspath(dest), "--no-gpu", "--headless",
+                    "file://" + os.path.abspath(src)])
+
 
 if __name__ == "__main__":
     if len(sys.argv) < 2:
         print("You must pass the documents you wish to download as arguments to this script!")
         sys.exit(1)
-    
+
     EWDS = []
     REPAIR_MANUALS = []
     COLLISION_MANUALS = []
@@ -273,14 +283,15 @@ if __name__ == "__main__":
         else:
             print("Unknown document type for '" + arg + "'!")
             sys.exit(1)
-    
+
+    service = Service(executable_path=r'./chromedriver')
     chrome_options = webdriver.ChromeOptions()
     chrome_options.add_argument("user-data-dir=./user-data")
 
     shutil.rmtree("download", True)
     os.makedirs("download")
 
-    driver = webdriver.Chrome("./chromedriver", options=chrome_options)
+    driver = webdriver.Chrome(service=service, options=chrome_options)
 
     driver.get("https://techinfo.toyota.com")
     input("Please login and press enter to continue...")
