@@ -3,7 +3,7 @@
 This script allows you to rip electrical wiring diagrams, collision/body repair manuals, and repair manuals from
 Toyota's TIS.
 
-### CZ notes: June 2022
+### CZ notes: December 2023
 
 Install dependencies (bs4, selenium) in conda environment. Activate (e.g., `conda activate scrape`)
 
