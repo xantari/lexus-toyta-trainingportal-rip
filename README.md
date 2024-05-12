@@ -3,9 +3,9 @@
 This script allows you to rip electrical wiring diagrams, collision/body repair manuals, and repair manuals from
 Toyota's TIS.
 
-### CZ notes: December 2023
+### CZ notes: May 2024
 
-Install dependencies (bs4, selenium) in conda environment. Activate (e.g., `conda activate scrape`)
+Install dependencies (bs4, selenium) in conda environment. Activate (e.g., `conda activate scrape`) (see below for pip command)
 
 1\. Check Google Chrome for version, then given version download matching ChromeDriver from http://chromedriver.chromium.org/downloads (e.g., chromedriver_mac64.zip) and unzip the binary into this directory.
 
@@ -64,3 +64,9 @@ continue to work in the HTML versions of the pages, but be aware that links in P
 
 Electrical diagrams are downloaded for the `system`, `overall`, and `routing` categories, as they are the most useful
 (and they come in convenient PDF form).
+
+# Windows
+
+Use rip-windows.py by placing this entire repository at c:\tis-rip-master folder (including the chromedriver.exe for your exact version of chrome you have installed).
+
+Then do rip-windows.py EM12345 for example.
